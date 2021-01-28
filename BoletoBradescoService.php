@@ -1,7 +1,5 @@
 <?php
 
-use Bradesco\Bradesco;
-use Bradesco\Helpers\Formatter;
 use Bradesco\BoletoApiService;
 use Bradesco\Exceptions\BradescoApiException;
 use Bradesco\Exceptions\BradescoRequestException;

@@ -9,37 +9,39 @@ use App\Services\Financeiro\Bradesco\Exceptions\BradescoRequestException;
 class Api
 {
     protected $client;
+    protected $accessToken;
     protected $nonce;
     protected $timestamp;
 
-    const BRADESCO_REQUEST_PATH         = 'BRADESCO_CERT_PATH';
+    const BRADESCO_REQUEST_PATH         = 'BRADESCO_FOLDER_PATH';
     const BRADESCO_CERT_PATH_JWT        = 'BRADESCO_CERT_PATH_JWT';
-    const BRADESCO_API_REGISTRAR_BOLETO = 'https://proxy.api.prebanco.com.br/v1/boleto/registrarBoleto';
     const SIGNATURE_URL                 = '/v1/boleto/registrarBoleto';
     const SIGNATURE_ALG                 = 'SHA256';
 
     public function __construct()
     {
-        $this->client = new Client();
+        ini_set('default_socket_timeout', 120);
+        $this->accessToken = new AccessToken();
     }
 
-    public function post(array $params = [], string $endpoint = null)
+    public function post(array $params = [])
     {
         $body = $this->encryptBodyData($params);
         $options = [
             'body' => $body,
             'signature' => $this->encryptSignatureData($body),
+            'access_token' => $this->accessToken->getToken()->access_token
         ];
 
-        return $this->request('POST', $endpoint, $options);
+        return $this->request('POST', $options);
     }
 
-    private function request(string $method, string $endpoint = null, $options)
+    private function request(string $method, $options = [])
     {
         try {
             $curl = curl_init();
             curl_setopt_array($curl, array(
-              CURLOPT_URL => self::BRADESCO_API_REGISTRAR_BOLETO,
+              CURLOPT_URL => Bradesco::getApiUrl(),
               CURLOPT_RETURNTRANSFER => true,
               CURLOPT_ENCODING => '',
               CURLOPT_MAXREDIRS => 10,
@@ -49,7 +51,7 @@ class Api
               CURLOPT_CUSTOMREQUEST => 'POST',
               CURLOPT_POSTFIELDS =>$options['body'],
               CURLOPT_HTTPHEADER => array(
-                'Authorization: Bearer '.$this->client->getToken()->access_token,
+                'Authorization: Bearer '.$options['access_token'],
                 'X-Brad-Nonce: '.$this->getNonce(),
                 'X-Brad-Timestamp: '.$this->getTimestamp(),
                 'X-Brad-Algorithm: '.self::SIGNATURE_ALG,
@@ -59,8 +61,16 @@ class Api
             ));
             $response = curl_exec($curl);
             curl_close($curl);
+
+            $resposta = json_decode($response);
+            if( (int) $resposta->codigo !== 0) {
+                \Log::info('Erro na geração do boleto: ',[$resposta]);
+                abort(409,'Erro na geração do boleto');
+            }
             // $response = $this->client->request($method, $endpoint, $options);
         } catch (RequestException $e) {
+            \Log::info("Erro na requisição do registro do boleto", [$e]);
+            abort(409,'Erro na geração do boleto');
             if (!$e->hasResponse()) {
                 throw new BradescoRequestException($e->getMessage());
             }
@@ -76,7 +86,7 @@ class Api
         $post = 'POST';
         $url = self::SIGNATURE_URL;
         $params = '';
-        $access_token = $this->client->getToken()->access_token;
+        $access_token = $this->accessToken->getToken()->access_token;
         $nonce = (integer) round(microtime(true) * 100000000);
         $this->setNonce($nonce);
         $date = new \DateTime();
@@ -86,7 +96,7 @@ class Api
         $privateKey = getenv(static::BRADESCO_CERT_PATH_JWT);
         $char = PHP_EOL;
         $result = $post.$char.$url.$char.$params.$char.$body.$char.$access_token.$char.$nonce.$char.$timestamp.$char.$alg;
-        $path = self::BRADESCO_REQUEST_PATH.'request_'.$nonce.'.txt';
+        $path = getenv(static::BRADESCO_REQUEST_PATH).'request_'.$nonce.'.txt';
         file_put_contents($path, $result);
         // $output = shell_exec('echo -n "'.$result.'" | openssl dgst -sha256 -keyform pem -sign '.$privateKey.' -binary  | openssl base64 -e -A '."| sed 's/\//_/g' | sed 's/\+/-/g' | sed -E s/=+$//");
         $output = shell_exec('echo -n "$(cat '.$path.')" | openssl dgst -sha256 -keyform pem -sign '.$privateKey.' -binary  | openssl base64 -e -A '."| sed 's/\//_/g' | sed 's/\+/-/g' | sed -E s/=+$//");

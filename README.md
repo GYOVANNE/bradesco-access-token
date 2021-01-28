@@ -1,5 +1,5 @@
 # Bradesco Access Token
-
+#### Manual v2.0 2020
 
 ### Bradesco integration to obtain Access Token for online registration of bill of pay
 
@@ -10,11 +10,8 @@
 ```
 BRADESCO_SANDBOX=true
 BRADESCO_SANDBOX_JWT=true
-BRADESCO_TIMEOUT=20
 BRADESCO_CLIENT_ID="xxx..."
 BRADESCO_CERT_PATH_JWT=/<path>/certificate.key.pem
-BRADESCO_CERT_PATH=/<path>/certificate.pfx
-BRADESCO_CERT_PASSWORD="xxx..."
 BRADESCO_FOLDER_PATH=/<path>/storage/app/public/Bradesco/
 ```
 

@@ -6,14 +6,30 @@ use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use Bradesco\Exceptions\BradescoRequestException;
 
-class Api
+class AccessToken
 {
     protected $client;
+    protected $token;
     protected $privateKey;
 
     const CLIENT_ID                 = 'BRADESCO_CLIENT_ID';
     const BRADESCO_CERT_PATH_JWT    = 'BRADESCO_CERT_PATH_JWT';
     const BRADESCO_GRANT_TYPE       = 'urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer';
+
+    public function __construct()
+    {
+        ini_set('default_socket_timeout', 120);
+        $token = self::post();
+        $this->setToken($token);
+    }
+
+    public function setToken($token) {
+        $this->token = $token;
+    }
+
+    public function getToken() {
+        return $this->token;
+    }
 
     public function getClientKey() {
         $this->clientKey = getenv(static::CLIENT_ID);
@@ -25,17 +41,17 @@ class Api
         return $this->privateKey;
     }
 
-    public function post(array $params = [], string $endpoint = null)
+    public function post()
     {
 
         $options = [
-            'body' => $this->encryptBodyData($params)
+            'body' => $this->encryptBodyData()
         ];
 
-        return $this->request('POST', $endpoint, $options);
+        return $this->request('POST', $options);
     }
 
-    private function request(string $method, string $endpoint = null, array $options = [])
+    private function request(string $method, array $options = [])
     {
         $body = \json_decode($options['body']);
         try {
@@ -65,12 +81,12 @@ class Api
         return json_decode($response);
     }
 
-    public function encryptBodyData($params)
+    public function encryptBodyData()
     {
         $date = new \DateTime();
         $dateCurrent = $date->getTimestamp();
         $dateCurrentAddMonth = $date->getTimestamp() +2592000;
-        $milliseconds = (integer) round(microtime(true) * 1000);
+        $milliseconds = (integer) round(microtime(true) * 100000000);
         $clientId = $this->getClientKey();
         $privateKey   = $this->getPrivateKey();
         $header     =   \base64_encode(json_encode(["alg"=>"RS256","typ"=>"JWT"]));
@@ -84,9 +100,7 @@ class Api
             "ver"=>"1.1"
         ]);
         $payload =\base64_encode($jsonPayload);
-
-        $output = shell_exec('echo -n "'.$header.'.'.$payload.'" | openssl dgst -sha256 -keyform pem -sign '.$privateKey.' -binary  | openssl base64 -e -A '."| sed 's/\//_/g' | sed 's/\+/-/g' | sed -E s/=+$//");
-
+        $output = shell_exec('echo -n "'.$header.'.'.$payload.'" | openssl dgst -sha256 -keyform pem -sign '.$privateKey." -binary  | openssl base64 -e -A | sed 's/\//_/g' | sed 's/\+/-/g' | sed -E s/=+$//");
         $headerPayloadSignature = $header.'.'.$payload.'.'.$output;
 
         return json_encode([
