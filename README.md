@@ -72,3 +72,6 @@ class BoletoBradescoService
         return $boleto;
     }
 }
+```
+
+#### Required Laravel >= 5.6/ PHP >= 5.4

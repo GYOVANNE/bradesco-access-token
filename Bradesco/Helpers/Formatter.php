@@ -97,7 +97,7 @@ class Formatter
     }
 
     // expected format: clip text up to max chars allowed
-    public static function clipText($value, int $clip)
+    public static function clipText($value, $clip)
     {
         $value = (string) $value;
 

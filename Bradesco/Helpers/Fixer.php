@@ -10,13 +10,13 @@ class Fixer
         // "tpRegistro" => "1",
         // "cdTipoContrato" => "48",
         // "clubBanco" => "2269651",
-        // "tpVencimento" => "0",
+        "tpVencimento" => "0",
 
         // empty values
         // "nuSequenciaContrato" => "0",
         // "eNuSequenciaContrato" => "0",
         // "cdProduto" => "0",
-        "nuTitulo" => "0",
+        // "nuTitulo" => "0",
         "tpProtestoAutomaticoNegativacao" => "0",
         "prazoProtestoAutomaticoNegativacao" => "0",
         "controleParticipante" => "",
@@ -60,12 +60,14 @@ class Fixer
 
     protected static $dateFields = [
         'dtEmissaoTitulo',
-        'dtVencimentoTitulo'
+        'dtVencimentoTitulo',
+        'dataLimiteDesconto1',
+        'dtLimitePagamentoBoleto'
     ];
 
     protected static $cpfCnpjFields = [
         'nuCpfcnpjPagador',
-        'nuCpfcnpjSacadorAvalista',
+        // 'nuCpfcnpjSacadorAvalista',
     ];
 
     protected static $nuCnpjField = [
@@ -75,7 +77,8 @@ class Fixer
     protected static $currencyFields = [
         'vlJuros',
         'vlMulta',
-        'vlNominalTitulo'
+        'vlNominalTitulo',
+        'vlDesconto1'
     ];
 
     protected static $textFields = [
@@ -170,7 +173,7 @@ class Fixer
 
     public static function setCustomerType(array &$data)
     {
-        if ($data['cdIndCpfcnpjPagador'] ?? null) return;
+        if ($data['cdIndCpfcnpjPagador'] ?: null) return;
 
         if (!isset($data['nuCpfcnpjPagador'])) return;
 
@@ -181,6 +184,7 @@ class Fixer
 
     public static function fixAll(array &$data)
     {
+
         // Per Bradesco API specs, all non-used fields must be
         // sent anyways but with their default values (0 or "")
         static::mergeWithDefaultData($data);
@@ -196,6 +200,7 @@ class Fixer
 
         // Automatically fill "cdIndCpfcnpjPagador" field
         static::setCustomerType($data);
+
     }
 }
 

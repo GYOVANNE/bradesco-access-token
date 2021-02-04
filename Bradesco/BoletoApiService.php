@@ -5,11 +5,9 @@ use Bradesco\Helpers\Fixer;
 
 class BoletoApiService
 {
-    public static function create(array $data, bool $fix = true)
+    public static function create(array $data = [])
     {
-        if ($fix) {
-            Fixer::fixAll($data);
-        }
+        Fixer::fixAll($data);
         $api = new Api();
         return $api->post($data);
     }

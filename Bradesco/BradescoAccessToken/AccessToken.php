@@ -51,7 +51,7 @@ class AccessToken
         return $this->request('POST', $options);
     }
 
-    private function request(string $method, array $options = [])
+    private function request($method, array $options = [])
     {
         $body = \json_decode($options['body']);
         try {
@@ -87,6 +87,7 @@ class AccessToken
         $dateCurrent = $date->getTimestamp();
         $dateCurrentAddMonth = $date->getTimestamp() +2592000;
         $milliseconds = (integer) round(microtime(true) * 100000000);
+        // $milliseconds = (integer) round(microtime(true) * 1000);
         $clientId = $this->getClientKey();
         $privateKey   = $this->getPrivateKey();
         $header     =   \base64_encode(json_encode(["alg"=>"RS256","typ"=>"JWT"]));

@@ -1,5 +1,5 @@
 <?php
-namespace App\Services\Financeiro\Bradesco\BradescoAccessToken;
+namespace Bradesco\BradescoAccessToken;
 
 use Bradesco\Exceptions\BradescoParameterException;
 

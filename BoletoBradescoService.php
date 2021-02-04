@@ -5,17 +5,25 @@ use Bradesco\Exceptions\BradescoApiException;
 use Bradesco\Exceptions\BradescoRequestException;
 
 use DateTime;
+use DateInterval;
 use App;
 
 class BoletoBradescoService
 {
+
+    private function concatNuNegociacao($agc, $cta) {
+        $cta = str_pad($cta, 7, '0', STR_PAD_LEFT);
+        return $agc.'0000000'.$cta;
+    }
+
     public function registrar($boleto)
     {
         $dataVencimento = new DateTime($boleto->data_vencimento);
         $dataEmissao = new DateTime($boleto->data_emissao);
+        $dataLimitePagamento = new DateTime($boleto->data_emissao);
+        $dataLimitePagamento->add(new DateInterval('P5D')); // 2 dias
 
         $data = [
-            // "nuCPFCNPJ" => $boleto->beneficiario_documento,
             "nuCPFCNPJ" => 'xxxxxxxx/xxxx-xx',
             // "filialCPFCNPJ" => "xxxx",
             "filialCPFCNPJ" => "xxxx",
@@ -23,6 +31,8 @@ class BoletoBradescoService
             "ctrlCPFCNPJ" => "xx",
             "idProduto" => "xx",
             "nuNegociacao" => "xxxxxxxxxxxxxxxxxx",
+            "idProduto" => "09",
+            "nuNegociacao" => $this->concatNuNegociacao($boleto->agencia, $boleto->conta),//Composição 4 dig da agencia, 7 posi 0, a conta em 7 posi sem o digito
             "nuCliente" => $boleto->id,
             "dtEmissaoTitulo" => $dataEmissao,
             "dtVencimentoTitulo" => $dataVencimento,
@@ -38,12 +48,16 @@ class BoletoBradescoService
             "municipioPagador" => $boleto->pagador_cidade,
             "ufPagador" => $boleto->pagador_uf,
             "cdIndCpfcnpjPagador" => "1",
-            "nuCpfcnpjPagador" => $boleto->pagador_documento
+            "nuCpfcnpjPagador" => $boleto->pagador_documento,
+            "nuTitulo" => $boleto->nosso_numero_seq,
+            // "nuTitulo" => "0"
+            "vlDesconto1" => $boleto->valor_desconto?:"0",
+            "dataLimiteDesconto1" => $boleto->valor_desconto?$dataVencimento:"",
+            "dtLimitePagamentoBoleto" => $dataLimitePagamento
           ];
 
         try {
             $boleto = BoletoApiService::create($data);
-            print_r($boleto);
         } catch (BradescoApiException $e) { // errors returned by API Bradesco
             echo sprintf("%s (%s)", $e->getMessage(), $e->getErrorCode());
         } catch (BradescoRequestException $e) { // server errors (errors HTTP 4xx e 5xx)

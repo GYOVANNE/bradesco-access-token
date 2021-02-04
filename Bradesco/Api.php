@@ -4,7 +4,8 @@ namespace Bradesco;
 use Psr\Http\Message\ResponseInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
-use App\Services\Financeiro\Bradesco\Exceptions\BradescoRequestException;
+use Bradesco\Exceptions\BradescoRequestException;
+use Bradesco\BradescoAccessToken\AccessToken;
 
 class Api
 {
@@ -16,6 +17,7 @@ class Api
     const BRADESCO_REQUEST_PATH         = 'BRADESCO_FOLDER_PATH';
     const BRADESCO_CERT_PATH_JWT        = 'BRADESCO_CERT_PATH_JWT';
     const SIGNATURE_URL                 = '/v1/boleto/registrarBoleto';
+    const ACCOUNT_AGENCY                = '';
     const SIGNATURE_ALG                 = 'SHA256';
 
     public function __construct()
@@ -36,7 +38,7 @@ class Api
         return $this->request('POST', $options);
     }
 
-    private function request(string $method, $options = [])
+    private function request( $method, $options = [])
     {
         try {
             $curl = curl_init();
@@ -63,8 +65,7 @@ class Api
             curl_close($curl);
 
             $resposta = json_decode($response);
-            if( (int) $resposta->codigo !== 0) {
-                \Log::info('Erro na geração do boleto: ',[$resposta]);
+            if(isset($resposta->codigo) && (int) $resposta->codigo){
                 abort(409,'Erro na geração do boleto');
             }
             // $response = $this->client->request($method, $endpoint, $options);
@@ -74,7 +75,6 @@ class Api
             if (!$e->hasResponse()) {
                 throw new BradescoRequestException($e->getMessage());
             }
-
             $response = $e->getResponse();
         }
 
@@ -85,9 +85,10 @@ class Api
     {
         $post = 'POST';
         $url = self::SIGNATURE_URL;
-        $params = '';
+        $params = self::ACCOUNT_AGENCY;
         $access_token = $this->accessToken->getToken()->access_token;
         $nonce = (integer) round(microtime(true) * 100000000);
+        // $nonce = (integer) round(microtime(true) * 1000);
         $this->setNonce($nonce);
         $date = new \DateTime();
         $timestamp = $date->format('Y-m-d\TH:i:s').'-03:00';
