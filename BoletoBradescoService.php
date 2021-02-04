@@ -21,7 +21,7 @@ class BoletoBradescoService
         $dataVencimento = new DateTime($boleto->data_vencimento);
         $dataEmissao = new DateTime($boleto->data_emissao);
         $dataLimitePagamento = new DateTime($boleto->data_emissao);
-        $dataLimitePagamento->add(new DateInterval('P5D')); // 2 dias
+        $dataLimitePagamento->add(new DateInterval('P5D')); // + 5 dias
 
         $data = [
             "nuCPFCNPJ" => 'xxxxxxxx/xxxx-xx',

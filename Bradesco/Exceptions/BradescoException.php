@@ -7,7 +7,7 @@ class BradescoException extends Exception
 {
     protected $errorCode;
 
-    public function __construct(string $message = null, $errorCode = null)
+    public function __construct($message = null, $errorCode = null)
     {
         $message = $message ? trim($message) : 'Undefined error';
 
