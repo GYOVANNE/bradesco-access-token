@@ -49,6 +49,8 @@ class Formatter
     // expected format: ddmmyyyy
     public static function formatDate($value)
     {
+        if($value=== '') return $value;
+
         // remove the time part
         if (is_string($value)) {
             $value = substr($value, 0, 10);

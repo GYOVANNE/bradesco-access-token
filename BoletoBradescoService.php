@@ -47,12 +47,12 @@ class BoletoBradescoService
             "bairroPagador" => $boleto->pagador_bairro,
             "municipioPagador" => $boleto->pagador_cidade,
             "ufPagador" => $boleto->pagador_uf,
-            "cdIndCpfcnpjPagador" => "1",
+            "cdIndCpfcnpjPagador" => (\strlen($boleto->pagador_documento) > 14)?'2':'1',
             "nuCpfcnpjPagador" => $boleto->pagador_documento,
             "nuTitulo" => $boleto->nosso_numero_seq,
             // "nuTitulo" => "0"
             "vlDesconto1" => $boleto->valor_desconto?:"0",
-            "dataLimiteDesconto1" => $boleto->valor_desconto?$dataVencimento:"",
+            "dataLimiteDesconto1" => (intval($boleto->valor_desconto) > 0)?$dataVencimento:"",
             "dtLimitePagamentoBoleto" => $dataLimitePagamento
           ];
 
